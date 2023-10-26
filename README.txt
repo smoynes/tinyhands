@@ -6,6 +6,7 @@
 Programs:
 
 - serial     terminal I/O with tinygo
+- neopixel   rainbow on a newpixel strip
 
 ------------------------------------------------
 
