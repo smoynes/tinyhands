@@ -6,7 +6,7 @@ Programs:
 
 - bluetooth  example Bluetooth LE advertisement and UART
 - fader      neopixel fading experiments
-- neopixel   rainbow on a newpixel strip
+- neopixel   rainbow on a neopixel strip
 - pico       examples using Pico SDK
 - rgbw       driving RGBW LEDs
 - serial     terminal I/O with tinygo
