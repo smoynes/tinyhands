@@ -2,3 +2,5 @@
 *.elf
 *.uf2
 *.hex
+/pico/build/**
+/pico/generated/**
