@@ -85,7 +85,6 @@ func watchdog(ctx context.Context, ticker *time.Ticker) {
 	for {
 		select {
 		case <-ticker.C:
-			println("woof")
 			machine.Watchdog.Update()
 		case <-ctx.Done():
 			return
@@ -100,7 +99,7 @@ func watchdog(ctx context.Context, ticker *time.Ticker) {
 //     indicate readiness;
 //   - a long interval, in any case, to indicate liveness.
 func WithBlinker(ctx context.Context) (context.Context, *blinker, context.CancelFunc) {
-	short := time.NewTicker(100 * time.Millisecond)
+	short := time.NewTicker(25 * time.Millisecond)
 	long := time.NewTicker(2 * time.Second)
 
 	b := blinker(false)
