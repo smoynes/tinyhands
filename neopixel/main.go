@@ -1,5 +1,5 @@
-//go:build microbit_v2
-// +build microbit_v2
+//go:build microbit_v2 || pico
+// +build microbit_v2 pico
 
 // serial is an experiment in microbit serial and terminal I/O.
 package main // import "github.com/smoynes/tinyhands/serial"
@@ -12,9 +12,9 @@ import (
 	"tinygo.org/x/drivers/ws2812"
 )
 
-var neo machine.Pin = machine.P0
+var neo machine.Pin = machine.GP0
 var ws ws2812.Device
-var leds [30]color.RGBA
+var leds [1]color.RGBA
 var spectrum = [...]color.RGBA{
 	{148, 0, 211, 255}, // Violet
 	{75, 0, 130, 255},  // Indigo
