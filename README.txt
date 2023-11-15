@@ -5,8 +5,14 @@
 
 Programs:
 
-- serial     terminal I/O with tinygo
+- bluetooth  microbit bluetooth
+- fader      brightness rainbow
+- pico       pico C SDK
+- rgbw       brightness
+- ringer     serial input and neopixel ring output
+- serial     serial I/O with tinygo
 - neopixel   rainbow on a newpixel strip
+- uart       uart I/O
 
 ------------------------------------------------
 
