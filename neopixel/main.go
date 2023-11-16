@@ -1,7 +1,7 @@
 //go:build microbit_v2 || pico
 // +build microbit_v2 pico
 
-// serial is an experiment in microbit serial and terminal I/O.
+// neopixel is an blinkenlights on a strip.
 package main // import "github.com/smoynes/tinyhands/serial"
 
 import (
@@ -12,9 +12,8 @@ import (
 	"tinygo.org/x/drivers/ws2812"
 )
 
-var neo machine.Pin = machine.GP0
 var ws ws2812.Device
-var leds [1]color.RGBA
+var leds [20]color.RGBA
 var spectrum = [...]color.RGBA{
 	{148, 0, 211, 255}, // Violet
 	{75, 0, 130, 255},  // Indigo
@@ -37,9 +36,7 @@ const spectrumSize = len(spectrum)
 const tickInterval = 200 * time.Millisecond
 
 func init() {
-	for i := 0; i < len(leds); i += len(spectrum) {
-		copy(leds[i:], spectrum[:])
-	}
+	copy(leds[:], spectrum[:])
 }
 
 func main() {

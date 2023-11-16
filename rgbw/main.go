@@ -11,7 +11,6 @@ import (
 
 const tickInterval = 200 * time.Millisecond
 
-var neo machine.Pin = machine.GP15
 var ws ws2812.Device
 var leds []color.RGBA
 var whitescale [16]uint8
@@ -29,7 +28,6 @@ func init() {
 
 func fadeLeds(offset int) {
 	c := color.NRGBA{}
-
 	println(offset, len(whitescale))
 	c.R = whitescale[offset%len(whitescale)]
 	c.A = whitescale[offset%len(whitescale)]
