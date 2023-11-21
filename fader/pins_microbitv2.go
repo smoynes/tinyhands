@@ -3,4 +3,6 @@
 
 package main
 
+import "machine"
+
 var neo machine.Pin = machine.P0

@@ -6,4 +6,7 @@ import (
 	"machine"
 )
 
-var neo machine.Pin = machine.P0
+var (
+	neo = machine.P0
+	led = machine.P28
+)

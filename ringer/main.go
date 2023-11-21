@@ -1,6 +1,6 @@
 //go:build pico
 
-// ringserial is a demo using serial input and a neopixel ring as output.
+// ringer is a demo using serial input and a neopixel ring as output.
 package main
 
 import (
@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	ring machine.Pin = machine.GP15
-	led  machine.Pin = machine.LED
+	ring    = machine.GP15
+	numLeds = 20
+	led     = machine.LED
 )
 
 var (
@@ -35,6 +36,7 @@ func main() {
 	println("Welcome to", machine.Device,
 		"running at", speed, "MHz")
 	println("WS2812", ring)
+
 	ctx, cancel = WithWatchdog(ctx)
 	defer cancel()
 
@@ -107,7 +109,7 @@ func WithBlinker(ctx context.Context) (context.Context, *blinker, context.Cancel
 	neo := ws2812.New(ring)
 
 	b := blinker{
-		leds: make([]color.RGBA, 12),
+		leds: make([]color.RGBA, numLeds),
 		neo:  neo,
 	}
 	n := copy(b.leds, []color.RGBA{
