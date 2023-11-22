@@ -9,32 +9,34 @@ import (
 	"tinygo.org/x/drivers/ws2812"
 )
 
-const tickInterval = 200 * time.Millisecond
+const tickInterval = 40 * time.Millisecond
 
-var neo machine.Pin = machine.GP0
 var ws ws2812.Device
-var leds []color.RGBA
-var whitescale [16]uint8
-var colorSpace = color.RGBAModel
+var rgbw color.RGBA
+var button = machine.BUTTONA // Button A
+var lit bool
 
 func init() {
-	for i := 0; i < len(whitescale); i++ {
-		whitescale[i] = uint8(i)
-	}
 	neo.Configure(machine.PinConfig{
 		Mode: machine.PinOutput,
 	})
 	ws = ws2812.New(neo)
-}
 
-func fadeLeds(offset int) {
-	c := color.NRGBA{}
+	led.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	led.Low()
 
-	println(offset, len(whitescale))
-	c.R = whitescale[offset%len(whitescale)]
-	c.A = whitescale[offset%len(whitescale)]
-	led := colorSpace.Convert(c).(color.RGBA)
-	leds = []color.RGBA{led}
+	button.Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
+	button.SetInterrupt(machine.PinToggle, func(pin machine.Pin) {
+		if pin.Get() != lit {
+			return
+		}
+		if lit {
+			lit = false
+		} else {
+			lit = true
+		}
+		led.Set(lit)
+	})
 }
 
 func main() {
@@ -44,21 +46,33 @@ func main() {
 	neo ^= neo
 	neo.Set(flip)
 
-	faderIndex := 0
+	var faderInc bool = true
+	var faderIndex uint8 = 0
 
 	for {
 		time.Sleep(tickInterval)
-		//fadeLeds(faderIndex)
-		//ws.WriteColors(leds)
-		println(faderIndex, faderIndex%16)
 		ws.WriteByte(byte(0))
 		ws.WriteByte(byte(0))
 		ws.WriteByte(byte(0))
-		ws.WriteByte(byte(faderIndex % 16))
+		ws.WriteByte(byte(faderIndex))
+		ws.WriteByte(byte(0))
+		ws.WriteByte(byte(0))
+		ws.WriteByte(byte(0))
+		ws.WriteByte(byte(faderIndex))
 
 		neo ^= neo
 		neo.Set(flip)
 
-		faderIndex++
+		if faderInc {
+			faderIndex += 1
+		} else {
+			faderIndex -= 1
+		}
+
+		if faderIndex >= 24 {
+			faderInc = false // dec
+		} else if faderIndex <= 1 {
+			faderInc = true // inc
+		}
 	}
 }

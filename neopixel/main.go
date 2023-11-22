@@ -1,7 +1,7 @@
-//go:build microbit_v2
-// +build microbit_v2
+//go:build microbit_v2 || pico
+// +build microbit_v2 pico
 
-// serial is an experiment in microbit serial and terminal I/O.
+// neopixel is an blinkenlights on a strip.
 package main // import "github.com/smoynes/tinyhands/serial"
 
 import (
@@ -12,49 +12,64 @@ import (
 	"tinygo.org/x/drivers/ws2812"
 )
 
-var neo machine.Pin = machine.P0
 var ws ws2812.Device
-var leds [30]color.RGBA
-var spectrum = [...]color.RGBA{
-	{148, 0, 211, 255}, // Violet
-	{75, 0, 130, 255},  // Indigo
-	{0, 0, 255, 255},   // Blue
-	{0, 127, 255, 255}, // Blue-Green
-	{0, 255, 255, 255}, // Cyan
-	{0, 255, 127, 255}, // Aqua
-	{0, 255, 0, 255},   // Green
-	{127, 255, 0, 255}, // Lime
-	{255, 255, 0, 255}, // Yellow
-	{255, 127, 0, 255}, // Orange
-	{255, 0, 0, 255},   // Red
-	{255, 0, 127, 255}, // Pink
-	{255, 0, 255, 255}, // Magenta
-	{127, 0, 255, 255}, // Purple
-}
-
-const spectrumSize = len(spectrum)
-
-const tickInterval = 200 * time.Millisecond
+var leds []color.RGBA
+var spectrum []color.RGBA
 
 func init() {
-	for i := 0; i < len(leds); i += len(spectrum) {
+	var colorSpectrum = [...]color.NRGBA{
+		{148, 0, 211, 55}, // Violet
+		{75, 0, 130, 55},  // Indigo
+		{0, 0, 255, 55},   // Blue
+		{0, 127, 255, 55}, // Blue-Green
+		{0, 255, 255, 55}, // Cyan
+		{0, 255, 127, 55}, // Aqua
+		{0, 255, 0, 55},   // Green
+		{127, 255, 0, 55}, // Lime
+		{255, 255, 0, 55}, // Yellow
+		{255, 127, 0, 25}, // Orange
+		{255, 0, 0, 55},   // Red
+		{255, 0, 127, 55}, // Pink
+		{255, 0, 255, 55}, // Magenta
+		{127, 0, 255, 55}, // Purple
+
+	}
+
+	leds = make([]color.RGBA, numLeds)
+	spectrum = make([]color.RGBA, len(colorSpectrum))
+	for i := 0; i < len(spectrum); i++ {
+		r, g, b, a := colorSpectrum[i].RGBA()
+		spectrum[i] = color.RGBA{
+			R: uint8(r),
+			G: uint8(g),
+			B: uint8(b),
+			A: uint8(a),
+		}
+	}
+	for i := 0; i < len(leds); i += 2 * len(spectrum) {
 		copy(leds[i:], spectrum[:])
 	}
 }
 
+const tickInterval = 50 * time.Millisecond
+
 func main() {
-	println("Running rainbow simulator on", machine.Device)
+	led.Configure(machine.PinConfig{Mode: machine.PinOutput})
 	neo.Configure(machine.PinConfig{
 		Mode: machine.PinOutput,
 	})
 	ws = ws2812.New(neo)
 
-	last := spectrum[len(spectrum)-1]
-	copy(leds[0:len(leds)-1], spectrum[1:len(spectrum)])
+	time.Sleep(time.Second)
 
-	leds[len(leds)-1] = last
+	println("Running rainbow simulator on", machine.Device)
+	led.High()
+	println("Leds:", len(leds), "Colors:", len(spectrum))
+	for i := 0; i < len(spectrum); i++ {
+		c := spectrum[i]
+		println("", c.R, c.G, c.B, c.A)
+	}
 
-	ws.WriteColors(leds[:])
 	neo.Set(!neo.Get())
 
 	for {
@@ -62,7 +77,13 @@ func main() {
 		first := leds[0]
 		copy(leds[:], leds[1:])
 		leds[len(leds)-1] = first
-		ws.WriteColors(leds[:])
-		neo.Set(!neo.Get())
+
+		for i := 0; i < len(leds); i++ {
+			c := leds[i]
+			ws.WriteByte(c.R)
+			ws.WriteByte(c.B)
+			ws.WriteByte(c.G)
+			ws.WriteByte(1)
+		}
 	}
 }

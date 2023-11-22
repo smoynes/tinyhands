@@ -3,4 +3,4 @@
 cd $(dirname "$0")/..
 set -ex
 exec tinygo build -target microbit-v2 -programmer cmsis-dap -size full \
-     -o RGBW.bin ./rgbw
+     -o ./rgbw/RGBW.bin ./rgbw

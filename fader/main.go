@@ -1,8 +1,4 @@
-//go:build microbit_v2
-// +build microbit_v2
-
-// serial is an experiment in microbit serial and terminal I/O.
-package main // import "github.com/smoynes/tinyhands/serial"
+package main
 
 import (
 	"image/color"
@@ -14,7 +10,6 @@ import (
 
 const tickInterval = 200 * time.Millisecond
 
-var neo machine.Pin = machine.P0
 var ws ws2812.Device
 var leds [30]color.RGBA
 var colorSpace = color.RGBAModel

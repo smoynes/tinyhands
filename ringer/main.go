@@ -1,20 +1,26 @@
-// uart is an exercise in using the Universal Asynchronous Receive Transmit
-// interface and also concurrency.
+//go:build pico
+
+// ringer is a demo using serial input and a neopixel ring as output.
 package main
 
 import (
 	"context"
+	"image/color"
 	"machine"
 	"time"
+
+	"tinygo.org/x/drivers/ws2812"
+)
+
+const (
+	ring    = machine.GP15
+	numLeds = 20
+	led     = machine.LED
 )
 
 var (
-	led                      = machine.LED
-	serial  machine.Serialer = machine.Serial // The primary UART.
-	secrets *machine.UART    = machine.UART1  // The secondary UART.
+	serial machine.Serialer = machine.Serial
 )
-
-var blink bool
 
 func main() {
 	led.High()
@@ -29,9 +35,7 @@ func main() {
 	speed := machine.CPUFrequency() / machine.MHz
 	println("Welcome to", machine.Device,
 		"running at", speed, "MHz")
-
-	println("Configured UARTs:")
-	println(" * UART0\n * UART1")
+	println("WS2812", ring)
 
 	ctx, cancel = WithWatchdog(ctx)
 	defer cancel()
@@ -93,47 +97,57 @@ func watchdog(ctx context.Context, ticker *time.Ticker) {
 
 }
 
-// WithBlinker starts a task that toggles the LED on two intervals:
+// WithBlinker starts a task periodically blink a number of LEDs:
 //
-//   - a short interval, if blinker.Flip has been called during the interval to
-//     indicate readiness;
-//   - a long interval, in any case, to indicate liveness.
+//   - on a short interval, advance an LED on a ring.
+//
+// /  - on a long interval, toggle the board LED to indicate liveness.
 func WithBlinker(ctx context.Context) (context.Context, *blinker, context.CancelFunc) {
-	short := time.NewTicker(25 * time.Millisecond)
+	short := time.NewTicker(60 * time.Millisecond)
 	long := time.NewTicker(2 * time.Second)
 
-	b := blinker(false)
+	neo := ws2812.New(ring)
+
+	b := blinker{
+		leds: make([]color.RGBA, numLeds),
+		neo:  neo,
+	}
+	n := copy(b.leds, []color.RGBA{
+		color.RGBA{255, 0, 0, 0},
+		color.RGBA{0, 255, 0, 0},
+		color.RGBA{0, 0, 255, 0},
+	})
+	println(n)
+
 	go b.blink(ctx, short, long)
 
 	return ctx, &b, func() { short.Stop(); long.Stop() }
 }
 
-// Blinker is a boolean that is true if LED blinked in the current short interval.
-type blinker bool
+// blinker holds the task state
+type blinker struct {
+	flipped bool
+	index   uint8
+	neo     ws2812.Device
+	leds    []color.RGBA
+}
 
-func (b *blinker) Flip() { *b = true }
+func (b *blinker) Flip() { b.flipped = true }
 
 func (b *blinker) blink(ctx context.Context, short *time.Ticker, long *time.Ticker) {
 	for {
-		for i := uint8(0); i < 10; {
-			select {
-			case <-ctx.Done():
-				return
-			case <-long.C:
-				led.Set(!led.Get())
-				*b = false
-			case <-short.C:
-				if *b {
-					led.Set(!led.Get())
-					*b = false
-				}
+		select {
+		case <-ctx.Done():
+			return
+		case <-long.C:
+			led.Set(!led.Get())
+		case <-short.C:
+			if b.flipped {
+				println("colors", len(b.leds))
+				b.neo.WriteColors(b.leds)
 			}
 
-		}
-
-		if *b {
-			led.Set(!led.Get())
-			*b = false
+			b.flipped = false
 		}
 	}
 
@@ -143,14 +157,10 @@ func (b *blinker) blink(ctx context.Context, short *time.Ticker, long *time.Tick
 // default UART and buffered.
 func WithMonitor(ctx context.Context, blinker *blinker) (context.Context, context.CancelFunc) {
 	m := monitor{serial, blinker}
-	input := make(chan rune, 2)
 
-	go m.monitor(ctx, input)
+	go m.monitor(ctx)
 
-	return ctx, func() {
-		serial.Write([]byte("\n\nBye\n\n"))
-		close(input)
-	}
+	return ctx, func() {}
 }
 
 type monitor struct {
@@ -159,7 +169,7 @@ type monitor struct {
 }
 
 // monitor reads bytes from uart
-func (m monitor) monitor(ctx context.Context, read chan<- rune) {
+func (m monitor) monitor(ctx context.Context) {
 	for {
 		if m.uart.Buffered() > 0 {
 			byte, err := m.uart.ReadByte()
