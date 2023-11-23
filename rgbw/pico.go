@@ -1,4 +1,4 @@
-//go:build pico
+//go:build pico && picotinyhands
 
 package main
 
@@ -7,6 +7,7 @@ import (
 )
 
 var (
-	neo = machine.GP22
-	led = machine.LED
+	neo    = machine.GP2
+	led    = machine.LED
+	button = machine.NoPin
 )

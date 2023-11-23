@@ -13,7 +13,6 @@ const tickInterval = 40 * time.Millisecond
 
 var ws ws2812.Device
 var rgbw color.RGBA
-var button = machine.BUTTONA // Button A
 var lit bool
 
 func init() {
@@ -26,7 +25,7 @@ func init() {
 	led.Low()
 
 	button.Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
-	button.SetInterrupt(machine.PinToggle, func(pin machine.Pin) {
+	button.SetInterrupt(machine.PinRising, func(pin machine.Pin) {
 		if pin.Get() != lit {
 			return
 		}
@@ -40,6 +39,7 @@ func init() {
 }
 
 func main() {
+	time.Sleep(1 * time.Second)
 	println("RGBW on", machine.Device, machine.CPUFrequency()/1000)
 
 	flip := neo.Get()
