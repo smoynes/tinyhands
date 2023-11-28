@@ -12,34 +12,38 @@ import (
 	"tinygo.org/x/drivers/ws2812"
 )
 
-var ws ws2812.Device
-var leds []color.RGBA
-var spectrum []color.RGBA
+var (
+	ws       ws2812.Device // pixel string device
+	leds     []color.RGBA  // pixel array
+	state    []uint8
+	spectrum []color.RGBA // color palette
+)
 
 func init() {
+	leds = make([]color.RGBA, numLeds)
+	state = make([]uint8, numLeds)
+
 	var colors = [...]color.NRGBA{
+		{},
 		{0xf8, 0xf9, 0xec, 3}, // Starlight
 		{0xf2, 0xf9, 0xec, 2},
 		{0xF9, 0xF4, 0xEC, 1},
 	}
 
-	leds = make([]color.RGBA, numLeds)
+	// Adjust brightness
 	spectrum = make([]color.RGBA, len(colors))
 	for i := 0; i < len(spectrum); i++ {
 		r, g, b, a := colors[i].RGBA()
 		spectrum[i] = color.RGBA{
-			R: uint8(r / 20),
-			G: uint8(g / 20),
-			B: uint8(b / 20),
+			R: uint8(r / 24),
+			G: uint8(g / 24),
+			B: uint8(b / 24),
 			A: uint8(a),
 		}
 	}
-	for i := 0; i < numLeds; i += numLeds / 4 {
-		copy(leds[i:], spectrum[:])
-	}
 }
 
-const tickInterval = 22 * time.Millisecond
+const tickInterval = 60 * time.Millisecond
 
 func main() {
 	led.Configure(machine.PinConfig{Mode: machine.PinOutput})
@@ -50,37 +54,48 @@ func main() {
 
 	time.Sleep(time.Second)
 
-	println("Running rainbow simulator on", machine.Device)
+	println("Running starlight simulator on", machine.Device)
 	println("Leds:", len(leds), "Colors:", len(spectrum))
-	for i := 0; i < len(leds); i++ {
-		c := leds[i]
-		if !(c.R == 0 && c.G == 0 && c.B == 0) {
-			println(i, c.R, c.G, c.B, c.A)
+
+	for i := 0; i < len(state); i++ {
+		rnd, err := machine.GetRNG()
+		if err != nil {
+			panic(err.Error())
 		}
+		rnd %= uint32(len(spectrum))
+		state[i] = uint8(rnd)
 	}
 
 	led.High()
 
-	neo.Set(!neo.Get())
-
 	for {
-		first := leds[0]
-		copy(leds[:], leds[1:])
-		leds[len(leds)-1] = first
+		update()
+		ws.WriteColors(leds[:])
+		time.Sleep(tickInterval)
+	}
+}
 
-		if rgbw {
-			for i := 0; i < len(leds); i++ {
-				c := leds[i]
-				ws.WriteByte(c.R)
-				ws.WriteByte(c.B)
-				ws.WriteByte(c.G)
-				ws.WriteByte(1)
-			}
+func update() {
+	for i := range state {
+		curr := state[i]
+
+		if curr == 0 {
+			continue
+		} else if rnd, err := machine.GetRNG(); err != nil {
+			break
 		} else {
-			ws.WriteColors(leds[:])
+			incr := (rnd % 3) - 1
+			n := curr + uint8(incr)
+			if n >= uint8(len(spectrum)) {
+				n = curr
+			} else if n <= 1 {
+				n = 1
+			}
 
+			curr = n
 		}
 
-		time.Sleep(tickInterval)
+		state[i] = curr
+		leds[i] = spectrum[curr]
 	}
 }

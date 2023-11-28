@@ -12,6 +12,7 @@ Programs:
 - rgbw       driving RGBW LEDs
 - ringer     serial input and neopixel ring output
 - serial     terminal I/O with tinygo
+- twinkle    starlight twinkle simulator
 - uart       UART and concurrenct experiements
 
 --------------------------------------------------------------------------------

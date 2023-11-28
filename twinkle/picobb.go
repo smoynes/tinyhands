@@ -1,4 +1,4 @@
-//go:build pico && picotinyhands
+//go:build pico && picobb
 
 package main
 
