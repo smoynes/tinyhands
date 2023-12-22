@@ -82,10 +82,9 @@ func setupDisplay() {
 		LCD_BL,
 	)
 	display.Configure(st7789.Config{
-		Width:      240,
 		Height:     135,
-		Rotation:   st7789.ROTATION_90,
-		RowOffset:  200,
+		Width:      240,
+		RowOffset:  0,
 		FrameRate:  st7789.FRAMERATE_111,
 		VSyncLines: st7789.MAX_VSYNC_SCANLINES,
 	})
@@ -94,19 +93,15 @@ func setupDisplay() {
 
 func drawDisplay() {
 	white := color.RGBA{255, 255, 255, 255}
-	red := color.RGBA{255, 0, 0, 255}
+	/*red := color.RGBA{255, 0, 0, 255}
 	blue := color.RGBA{0, 0, 255, 255}
-	green := color.RGBA{0, 255, 0, 255}
+	green := color.RGBA{0, 255, 0, 255}*/
 	black := color.RGBA{0, 0, 0, 255}
 
 	display.FillScreen(black)
-	width, height := display.Size()
 
-	display.FillRectangle(0, 0, width/2, height/2, white)
-	display.FillRectangle(width/2, 0, width/2, height/2, red)
-	display.FillRectangle(0, height/2, width/2, height/2, green)
-	display.FillRectangle(width/2, height/2, width/2, height/2, blue)
-	display.FillRectangle(width/4, height/4, width/2, height/2, black)
+	width, height := int16(240), int16(135)
+	display.FillRectangle(0, 0, width-5, height-5, white)
 }
 
 // Pins for I2C DS1307 RTC
