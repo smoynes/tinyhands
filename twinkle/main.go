@@ -2,7 +2,7 @@
 // +build microbit_v2 pico
 
 // twinkle is a starlight twinkle experiment on a 0.50m pixel strip.
-package main // import "github.com/smoynes/tinyhands/serial"
+package main // import "github.com/smoynes/tinyhands/twinkle"
 
 import (
 	"image/color"
@@ -24,10 +24,10 @@ func init() {
 	state = make([]uint8, numLeds)
 
 	var colors = [...]color.NRGBA{
-		{},
+		{},                    // Black
 		{0xf8, 0xf9, 0xec, 3}, // Starlight
 		{0xf2, 0xf9, 0xec, 2},
-		{0xF9, 0xF4, 0xEC, 1},
+		{0xf2, 0xf4, 0xec, 1},
 	}
 
 	// Adjust brightness
@@ -40,10 +40,9 @@ func init() {
 			B: uint8(b / 24),
 			A: uint8(a),
 		}
+		println(i, spectrum[i].R, spectrum[i].G, spectrum[i].B)
 	}
 }
-
-const tickInterval = 60 * time.Millisecond
 
 func main() {
 	led.Configure(machine.PinConfig{Mode: machine.PinOutput})
@@ -62,37 +61,33 @@ func main() {
 		if err != nil {
 			panic(err.Error())
 		}
+		rnd += 1
 		rnd %= uint32(len(spectrum))
 		state[i] = uint8(rnd)
 	}
 
 	led.High()
 
+	const (
+		tickInterval = 64 * time.Millisecond
+		dt = 64
+	)
+
 	for {
 		update()
 		ws.WriteColors(leds[:])
 		time.Sleep(tickInterval)
+
+		eased = ease(dt)
 	}
 }
 
-func update() {
+func update(easing int) {
 	for i := range state {
 		curr := state[i]
 
 		if curr == 0 {
 			continue
-		} else if rnd, err := machine.GetRNG(); err != nil {
-			break
-		} else {
-			incr := (rnd % 3) - 1
-			n := curr + uint8(incr)
-			if n >= uint8(len(spectrum)) {
-				n = curr
-			} else if n <= 1 {
-				n = 1
-			}
-
-			curr = n
 		}
 
 		state[i] = curr
