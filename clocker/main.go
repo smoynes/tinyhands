@@ -1,6 +1,7 @@
 // Clocker is an experiment with an I2C clock module using a DS1307 RTC.
 
-//go:build pico && picotinyhands
+//go:build microbit_v2 || pico
+// +build microbit_v2 pico
 
 package main
 
@@ -12,19 +13,9 @@ import (
 	"tinygo.org/x/drivers/ds1307"
 )
 
-var (
-	led         = machine.LED
-	controller  = machine.I2C0
-	clockConfig = machine.I2CConfig{
-		Frequency: 100e3,
-		SDA:       machine.GP16,
-		SCL:       machine.GP17,
-	}
-	clock    ds1307.Device
-	setClock = false
-)
-
 var BuildTimestamp string // "2023-11-22T11:31:59-05:00"
+
+var clock ds1307.Device
 
 func init() {
 	led.Configure(machine.PinConfig{Mode: machine.PinOutput})
