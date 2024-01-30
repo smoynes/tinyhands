@@ -23,24 +23,29 @@ func init() {
 	leds = make([]color.RGBA, numLeds)
 	state = make([]uint8, numLeds)
 
-	var colors = [...]color.NRGBA{
-		{},                    // Black
-		{0xf8, 0xf9, 0xec, 3}, // Starlight
-		{0xf2, 0xf9, 0xec, 2},
-		{0xf2, 0xf4, 0xec, 1},
-	}
+	var (
+		start                          = color.NRGBA{10, 10, 10, 255}
+		startr, startg, startb, starta = start.RGBA()
+		end                            = color.NRGBA{0, 0, 0, 255}
+		endr, endg, endb, enda         = end.RGBA()
+	)
 
-	// Adjust brightness
-	spectrum = make([]color.RGBA, len(colors))
-	for i := 0; i < len(spectrum); i++ {
-		r, g, b, a := colors[i].RGBA()
+	const easeSteps = 10
+	spectrum = make([]color.RGBA, easeSteps)
+
+	// Ease in-out brightness.
+	for i := uint32(0); i < easeSteps; i++ {
+		r := int8(startr - i*(startr-endr)/easeSteps)
+		g := int8(startg - i*(startg-endg)/easeSteps)
+		b := int8(startb - i*(startb-endb)/easeSteps)
+		a := int8(starta - i*(starta-enda)/easeSteps)
+
 		spectrum[i] = color.RGBA{
-			R: uint8(r / 24),
-			G: uint8(g / 24),
-			B: uint8(b / 24),
+			R: uint8(r),
+			G: uint8(g),
+			B: uint8(b),
 			A: uint8(a),
 		}
-		println(i, spectrum[i].R, spectrum[i].G, spectrum[i].B)
 	}
 }
 
@@ -61,33 +66,46 @@ func main() {
 		if err != nil {
 			panic(err.Error())
 		}
-		rnd += 1
 		rnd %= uint32(len(spectrum))
 		state[i] = uint8(rnd)
 	}
 
 	led.High()
 
+	for i := 0; i < len(spectrum); i++ {
+		c := spectrum[i]
+		println(i, c.R, c.G, c.B, c.A)
+	}
+
 	const (
-		tickInterval = 64 * time.Millisecond
-		dt = 64
+		tickInterval = 100 * time.Millisecond
 	)
 
 	for {
 		update()
 		ws.WriteColors(leds[:])
 		time.Sleep(tickInterval)
-
-		eased = ease(dt)
 	}
 }
 
-func update(easing int) {
+func update() {
 	for i := range state {
 		curr := state[i]
 
 		if curr == 0 {
 			continue
+		} else if rnd, err := machine.GetRNG(); err != nil {
+			break
+		} else {
+			incr := (rnd % 3) - 1
+			n := curr + uint8(incr)
+			if n >= uint8(len(spectrum)) {
+				n = curr
+			} else if n <= 1 {
+				n = 1
+			}
+
+			curr = n
 		}
 
 		state[i] = curr

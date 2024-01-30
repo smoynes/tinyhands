@@ -5,7 +5,7 @@ package main
 import "machine"
 
 var (
-	neo     = machine.GP2
+	neo     = machine.GP12
 	led     = machine.LED
 	numLeds = 60
 )
