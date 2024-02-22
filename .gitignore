@@ -4,3 +4,5 @@
 *.hex
 /pico/build/**
 /pico/generated/**
+/display/env/**
+/display/venv/**
