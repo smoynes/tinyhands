@@ -1,0 +1,17 @@
+[Unit]
+Description=Mini Camera Display
+After=multi-user.target
+
+[Service]
+Type=simple
+User=sm
+Group=sm
+WorkingDirectory=/home/sm
+ExecStart=/home/sm/env/bin/python3 display.py
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=display.service
+
+[Install]
+WantedBy=multi-user.target

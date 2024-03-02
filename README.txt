@@ -13,8 +13,8 @@ Programs:
 - ringer     serial input and neopixel ring output
 - serial     terminal I/O with tinygo
 - twinkle    starlight twinkle simulator
-- uart       UART and concurrenct experiements
-
+- uart       UART and concurrenct experiments
+- display    example display HAT mini screen in Python
 --------------------------------------------------------------------------------
                             Just say no to make(1).
 --------------------------------------------------------------------------------

@@ -15,4 +15,5 @@ $ sudo apt install python3-numpy python3-rpi.gpio python3-pil
 ```console
 $ python3 -m venv --system-site-packages env
 $ ./env/bin/pip install displayhatmini
+$ ./env/bin/python3 display.py
 ```
